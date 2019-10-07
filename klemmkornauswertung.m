@@ -55,4 +55,4 @@ tform = fitgeotrans(selected_moving_points, selected_fixed_points, 'affine');
 
 img_material_registered = imwarp(img_material, tform, 'OutputView', imref2d(size(img_clean)));
 figure
-imshowpair(img_clean, img_material_registered, 'checkerboard');
+imshowpair(img_clean, img_material_registered, 'blend');
