@@ -8,6 +8,9 @@ clc
 addpath(genpath('.\functions'));
 
 
+COVERAGE_CLASS_EDGES = [0, eps, 0.1, 0.9, 1]; % move to settings later
+
+
 % MATCHING
 
 % we start here with a binary image and merge the two program parts later
@@ -35,4 +38,14 @@ stats_material = regionprops(bw_material, stats_to_be_calculated);
 
 
 % overall stats
-overall_stats
+overall_stats.TotalFreeAreaCleanImage_px = sum([stats_clean.Area]);
+overall_stats.TotalFreeAreaMaterialImage_px = sum([stats_clean.AreaMaterialImage]);
+overall_stats.TotalCoveredArea_px = overall_stats.TotalFreeAreaCleanImage_px - overall_stats.TotalFreeAreaMaterialImage_px;
+
+% counting of sieving holes with specific coverage
+relative_coverage = [stats_clean.RelativeCoverage]';
+counted_wholes = histcounts(relative_coverage, COVERAGE_CLASS_EDGES);
+
+% todo
+% function to save counting results
+% saving to xls
