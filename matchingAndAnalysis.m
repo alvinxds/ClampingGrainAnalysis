@@ -13,6 +13,27 @@ XLS_FILENAME = 'stats.xlsx';
 fullfilename_xlsx = fullfile(FOLDER_TO_SAVE_XLSX, XLS_FILENAME);
 CALIBFACTOR = 2; %[mm/px]
 
+% Loading of images
+
+% get clean image from UI
+img_clean = readImgFromUI('Select image of clean sieving surface.');
+
+% get material image from UI
+[img_material, path_material_img, filename_material_img] = readImgFromUI('Select image of sieving surface with clamping grain.');
+
+% the results are saved in the material img folder:
+path_xlsx = path_material_img;
+clear path_material_img
+
+% the stats are saved in a file that is named after the material image
+% filename
+
+filename_xlsx = getXLSXFilename(filename_material_img);
+
+% fullfile is then given by:
+
+
+
 
 % MATCHING
 
@@ -56,7 +77,7 @@ object_stats_export = prepareObjectStatsForExport(stats_clean, CALIBFACTOR);
 overall_stats_export = prepareOverallStatsForExport(overall_stats, CALIBFACTOR);
 counting_stats_export = counting_stats;
 
-% todo
+% export stats as .xlsx
 saveResultsAsXLSX(object_stats_export, overall_stats_export, counting_stats_export, fullfilename_xlsx)
 
 fprintf('Results:\n')
