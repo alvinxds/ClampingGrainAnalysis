@@ -6,9 +6,12 @@ clc
 
 % add functions from subfolder and load settings
 addpath(genpath('.\functions'));
+load('settings.mat')
 
-
-COVERAGE_CLASS_EDGES = [0, eps, 0.1, 0.9, 1]; % move to settings later
+FOLDER_TO_SAVE_XLSX = 'Z:\git\Klemmkornauswertung'; % replace by folder from UI later on
+XLS_FILENAME = 'stats.xlsx';
+fullfilename_xlsx = fullfile(FOLDER_TO_SAVE_XLSX, XLS_FILENAME);
+CALIBFACTOR = 2; %[mm/px]
 
 
 % MATCHING
@@ -43,9 +46,18 @@ overall_stats.TotalFreeAreaMaterialImage_px = sum([stats_clean.AreaMaterialImage
 overall_stats.TotalCoveredArea_px = overall_stats.TotalFreeAreaCleanImage_px - overall_stats.TotalFreeAreaMaterialImage_px;
 
 % counting of sieving holes with specific coverage
-relative_coverage = [stats_clean.RelativeCoverage]';
-counted_wholes = histcounts(relative_coverage, COVERAGE_CLASS_EDGES);
+counting_stats = getCountingStats(stats_clean, COVERAGE_CLASS_EDGES);
+
+
+% todo: get/calc calibration factor
+
+% prepare stats for export to .xlsx - file
+object_stats_export = prepareObjectStatsForExport(stats_clean, CALIBFACTOR);
+overall_stats_export = prepareOverallStatsForExport(overall_stats, CALIBFACTOR);
+counting_stats_export = counting_stats;
 
 % todo
-% function to save counting results
-% saving to xls
+saveResultsAsXLSX(object_stats_export, overall_stats_export, counting_stats_export, fullfilename_xlsx)
+
+fprintf('Results:\n')
+dispLinkToFolder(fullfilename_xlsx)
