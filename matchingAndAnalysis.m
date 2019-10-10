@@ -8,9 +8,12 @@ clc
 addpath(genpath('.\functions'));
 load('settings.mat')
 
+N_MARKER = 3;
+MARKER_RADIUS_MM = 18; %mm
+
 FOLDER_TO_SAVE_XLSX = 'Z:\git\Klemmkornauswertung'; % replace by folder from UI later on
 
-CALIBFACTOR = 2; %[mm/px], replace automatically later on
+global_calibfactor = 2; %[mm/px], replace automatically later on
 
 %% Loading of images
 
@@ -42,7 +45,33 @@ structuring_element = strel('sphere', 4);
 [bw_marker_cleanimg, bw_channelwise] = getBinaryMarkerImage(img_clean, marker_thresholds);%, structuring_element);
 clear structuring_element_size structuring_element
 
-marker_stats = regionprops(bw_marker_cleanimg, 'basic');
+marker_stats = regionprops(bw_marker_cleanimg, {'Area', 'BoundingBox', 'Centroid'});
+
+% sort by area to find markers (biggest elements)
+[~, sort_index] = sort([marker_stats.Area], 'descend');
+marker_stats = marker_stats(sort_index);
+marker_stats = marker_stats(1:N_MARKER);
+
+% Get global_calibfactor
+% get boundingbox measurements = radii
+for i = 1:N_MARKER
+    radii_x(i,1) = marker_stats(i).BoundingBox(3);
+    radii_y(i,1) = marker_stats(i).BoundingBox(4);
+end
+
+% combine x and y radii
+radii = [radii_x;radii_y];
+clear radii_x radii_y
+
+median_radius_px = median(radii);
+global_global_calibfactor = MARKER_RADIUS_MM ./ median_radius_px; % [mm/px]
+
+
+
+
+
+
+
 
 
 % bw_marker_materialimg = getBinaryMarkerImage(img_material, marker_thresholds);
@@ -89,8 +118,8 @@ counting_stats = getCountingStats(stats_clean, COVERAGE_CLASS_EDGES);
 % todo: get/calc calibration factor
 
 % prepare stats for export to .xlsx - file
-object_stats_export = prepareObjectStatsForExport(stats_clean, CALIBFACTOR);
-overall_stats_export = prepareOverallStatsForExport(overall_stats, CALIBFACTOR);
+object_stats_export = prepareObjectStatsForExport(stats_clean, global_calibfactor);
+overall_stats_export = prepareOverallStatsForExport(overall_stats, global_calibfactor);
 counting_stats_export = counting_stats;
 
 % export stats as .xlsx

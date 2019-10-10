@@ -35,8 +35,8 @@ function [bw_marker, bw_channelwise] = getBinaryMarkerImage(img, marker_threshol
     end
 
     % convert to int
-%     bw_marker = uint8(bw_marker);
-%     bw_channelwise = uint8(bw_channelwise);
+    bw_marker = logical(bw_marker);
+    bw_channelwise = logical(bw_channelwise);
 
 end
 
