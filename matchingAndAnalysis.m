@@ -9,33 +9,49 @@ addpath(genpath('.\functions'));
 load('settings.mat')
 
 FOLDER_TO_SAVE_XLSX = 'Z:\git\Klemmkornauswertung'; % replace by folder from UI later on
-XLS_FILENAME = 'stats.xlsx';
-fullfilename_xlsx = fullfile(FOLDER_TO_SAVE_XLSX, XLS_FILENAME);
-CALIBFACTOR = 2; %[mm/px]
 
-% Loading of images
+CALIBFACTOR = 2; %[mm/px], replace automatically later on
+
+%% Loading of images
 
 % get clean image from UI
-img_clean = readImgFromUI('Select image of clean sieving surface.');
+img_clean = readImgFromUI('Select image of clean sieving surface.', STARTING_FOLDER);
 
 % get material image from UI
-[img_material, path_material_img, filename_material_img] = readImgFromUI('Select image of sieving surface with clamping grain.');
+[img_material, path_material_img, filename_material_img] = readImgFromUI('Select image of sieving surface with clamping grain.', STARTING_FOLDER);
 
 % the results are saved in the material img folder:
 path_xlsx = path_material_img;
 clear path_material_img
 
-% the stats are saved in a file that is named after the material image
-% filename
-
+% the stats are saved in a file that is named after thefilename of the
+% material image:
 filename_xlsx = getXLSXFilename(filename_material_img);
 
 % fullfile is then given by:
+fullfilename_xlsx = fullfile(path_xlsx, filename_xlsx);
+
+%% Marker detection
+% load marker colors and get thresholds
+img_marker = imread('marker/marker_color.jpg');
+marker_thresholds = getMarkerThresholds(img_marker, 4);
+
+% marker thresholding
+structuring_element_size = (2./3456) .* size(img_clean,2);
+structuring_element = strel('sphere', 4);
+[bw_marker_cleanimg, bw_channelwise] = getBinaryMarkerImage(img_clean, marker_thresholds);%, structuring_element);
+clear structuring_element_size structuring_element
+
+marker_stats = regionprops(bw_marker_cleanimg, 'basic');
+
+
+% bw_marker_materialimg = getBinaryMarkerImage(img_material, marker_thresholds);
+
+% imshowpair(bw_marker_cleanimg, bw_marker_materialimg)
 
 
 
-
-% MATCHING
+%% MATCHING
 
 % we start here with a binary image and merge the two program parts later
 % on
@@ -57,7 +73,7 @@ stats_material = regionprops(bw_material, stats_to_be_calculated);
 [stats_clean,stats_material] = addNearestRegionToStats(stats_clean,stats_material);
 [stats_clean,stats_material] = addAreasOfCorrespondingRegionToStats(stats_clean,stats_material);
 
-% ANALYSIS
+%% ANALYSIS
 [stats_clean] = addRelativeCoverageToStats(stats_clean);
 
 

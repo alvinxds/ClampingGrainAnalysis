@@ -7,7 +7,7 @@ function [shorten_filename] = removeFileEndingFromFilename(filename)
     
     shorten_filename = '';
     for i = 1:n_digits
-        digit = filename(i)
+        digit = filename(i);
        if  digit ~= '.'
            shorten_filename(i) = digit;
        else
