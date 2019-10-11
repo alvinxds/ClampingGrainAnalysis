@@ -43,6 +43,8 @@ marker_stats = getMarkerStats(img_clean, marker_thresholds, N_MARKER);
 
 global_calibfactor = getGlobalCalibfactor(marker_stats, MARKER_RADIUS_MM);
 
+marker_positions = identifyMarkerPositions(marker_stats);
+
 
 
 
@@ -69,6 +71,7 @@ bw_clean = imread('bw_test_clean.png');
 bw_material = imread('bw_test_material.png');
 bw_material = imbinarize(bw_material); % convert from GIMP
 
+figure
 imshowpair(bw_clean, bw_material, 'montage')
 
 
