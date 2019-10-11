@@ -1,4 +1,4 @@
-function [marker_positions] = identifyMarkerPositions(marker_stats)
+function [marker_stats] = addMarkerLabels(marker_stats)
     % the (rotated) image contains three markers. The three markers are
     % arranged in the same way as the markers of QR-Codes: one in the top
     % left corner, one in the bottom left and one in top right corner
@@ -6,9 +6,7 @@ function [marker_positions] = identifyMarkerPositions(marker_stats)
     % left and top right from arbitrary rotated marker points
     
     % Vertex positions of a triangle formed by the three marker centroids
-    v1 = marker_stats(1).Centroid';
-    v2 = marker_stats(2).Centroid';
-    v3 = marker_stats(3).Centroid';
+    centroids = getMarkerCentroidsAsMatrix(marker_stats);
     
     %% find top left corner
     % find the vertex that is on the opposite site of the
@@ -16,25 +14,24 @@ function [marker_positions] = identifyMarkerPositions(marker_stats)
     
     % the hypotenuse is the longest of the three lines, distance of the
     % vertexes (lines) are given by
-    d_12 = norm(v2 - v1);
-    d_23 = norm(v3 - v2);
-    d_31 = norm(v1 - v3);
+    d_12 = norm(centroids(:,2) - centroids(:,1));
+    d_23 = norm(centroids(:,3) - centroids(:,2));
+    d_31 = norm(centroids(:,1) - centroids(:,3));
     
     d_max = max([d_12, d_23, d_31]);
     
     switch d_max
         case d_12
-            marker_positions.topleft = v3;
-            topleft_index = 3;
+            topleft_index = 3;   
         case d_23
-            marker_positions.topleft = v1;
             topleft_index = 1;
         case d_31
-            marker_positions.topleft = v2;
             topleft_index = 2;
         otherwise
             error('Error in switch d_max.')            
     end
+    
+    v_topleft = centroids(:,topleft_index);
     
     %% find bottom left and top right corner
     
@@ -42,21 +39,23 @@ function [marker_positions] = identifyMarkerPositions(marker_stats)
     % then rotate the points, such that the line connecting v_topleft and
     % the chosen point is parallel to the x axis
     % we call the point choosen point v_a and the third point v_b
-    v_topleft = marker_positions.topleft;
-    
+        
     switch topleft_index
         case 1
-            v_a = v2;
-            v_b = v3;
+            v_a_index = 2;
+            v_b_index = 3;
         case 2
-            v_a = v3;
-            v_b = v1;
+            v_a_index = 3;
+            v_b_index = 1;
         case 3
-            v_a = v_1;
-            v_b = v_2;
+            v_a_index = 1;
+            v_b_index = 2;
         otherwise
             error('Error in switch marker_positions.topleft.index.') 
     end
+    
+    v_a = centroids(:, v_a_index);
+    v_b = centroids(:, v_b_index);
     
     rotation_angle = getAngleToXAxis(v_topleft, v_a);
     
@@ -67,15 +66,25 @@ function [marker_positions] = identifyMarkerPositions(marker_stats)
     % x-direction)
     if v_b_rotated(1) < v_topleft(1)
         % v_b is below line
-        marker_positions.topright = v_a;
-        marker_positions.bottomleft = v_b;
+        topright_index = v_a_index;
+        bottomleft_index = v_b_index;
     else
-        marker_positions.topright = v_b;
-        marker_positions.bottomleft = v_a;
+        topright_index = v_b_index;
+        bottomleft_index = v_a_index;
     end
+    
+    marker_stats(topleft_index).Label = 'top_left';
+    marker_stats(topright_index).Label = 'top_right';
+    marker_stats(bottomleft_index).Label = 'bottom_left';
         
 end
 
+function [centroids] = getMarkerCentroidsAsMatrix(marker_stats)
+    centroids = zeros(2,3);
+    for i = 1:3
+       centroids(:,i) = marker_stats(i).Centroid'; 
+    end
+end
 
 function [angle] = getAngleToXAxis(p1, p2)
     dx = p2(1) - p1(1);

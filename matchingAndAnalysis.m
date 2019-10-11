@@ -39,25 +39,16 @@ fullfilename_xlsx = fullfile(path_xlsx, filename_xlsx);
 img_marker_color = imread('marker/marker_color.jpg');
 marker_thresholds = getMarkerThresholds(img_marker_color, 4);
 
-marker_stats = getMarkerStats(img_clean, marker_thresholds, N_MARKER);
+marker_stats_clean = getMarkerStats(img_clean, marker_thresholds, N_MARKER);
+marker_stats_material = getMarkerStats(img_material, marker_thresholds, N_MARKER);
 
-global_calibfactor = getGlobalCalibfactor(marker_stats, MARKER_RADIUS_MM);
-
-marker_positions = identifyMarkerPositions(marker_stats);
-
+global_calibfactor = getGlobalCalibfactor(marker_stats_clean, MARKER_RADIUS_MM);
 
 
-
-
-
-
-
-
-
-% bw_marker_materialimg = getBinaryMarkerImage(img_material, marker_thresholds);
-
-% imshowpair(bw_marker_cleanimg, bw_marker_materialimg)
-
+[img_clean_with_marker] = drawMarkerPositionsOnImg(img_clean,marker_stats_clean);
+[img_material_with_marker] = drawMarkerPositionsOnImg(img_material,marker_stats_material);
+figure
+imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
 
 
 %% MATCHING

@@ -11,5 +11,9 @@ function [marker_stats] = getMarkerStats(img_clean, marker_thresholds, N_MARKER)
     [~, sort_index] = sort([marker_stats.Area], 'descend');
     marker_stats = marker_stats(sort_index);
     marker_stats = marker_stats(1:N_MARKER);
+    
+    % identify topleft, topright and bottomright marker
+    marker_stats = addMarkerLabels(marker_stats);   
+    
 end
 
