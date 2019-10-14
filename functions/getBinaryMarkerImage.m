@@ -25,18 +25,11 @@ function [bw_marker, bw_channelwise] = getBinaryMarkerImage(img, marker_threshol
     % overall binary image (bw_marker) is then given by the AND-Operation of all color
     % channels:
     bw_marker = ones(size(bw_channelwise,1), size(bw_channelwise,2), 1);
-    figure
     for i = 1:n_rgb_channels
-        
         bw_marker(:,:) = bw_marker(:,:) & bw_channelwise(:,:,i);    
-        subplot(1, n_rgb_channels, i)
-        title(num2str(i))
-        imshow(bw_marker)
     end
 
     % convert to int
     bw_marker = logical(bw_marker);
     bw_channelwise = logical(bw_channelwise);
-
 end
-

@@ -30,7 +30,6 @@ function [marker_stats] = addMarkerCentroidBB(marker_stats)
         bb_centroid = bb_topleft_corner + [bb_width_x, bb_height_y]./2;
         
         % add to stats
-        marker_stats(i).Centroid = bb_centroid;
-       
+        marker_stats(i).Centroid = bb_centroid;      
     end
 end

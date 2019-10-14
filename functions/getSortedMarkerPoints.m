@@ -12,7 +12,7 @@ function [marker_points] = getSortedMarkerPoints(marker_stats)
     for i = 1:n_marker
         label = marker_stats(i).Label;
         if isstring(label) == false
-            label = convertCharsToStrings(label)
+            label = convertCharsToStrings(label);
         end
         
         if strcmp(label, "top_left") == true
@@ -22,8 +22,6 @@ function [marker_points] = getSortedMarkerPoints(marker_stats)
         else 
             sorted_index = 3;
         end
-        sorted_index
         marker_points(sorted_index,:) = marker_stats(i).Centroid;
-        marker_points(sorted_index,:)
     end
 end

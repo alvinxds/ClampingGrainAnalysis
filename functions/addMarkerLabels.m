@@ -10,8 +10,6 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
     % switch from img coordinate system (COS) to standard xy COS
     centroids_xy = transformToXYCOS(centroids, img_height);
     
-    
-    
     %% find top left corner
     % find the vertex that is on the opposite site of the
     % hypotenuse, this is the top left marker:
@@ -35,7 +33,7 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
             error('Error in switch d_max.')            
     end
     
-    v_topleft = centroids_xy(:,topleft_index)
+    v_topleft = centroids_xy(:,topleft_index);
     
     %% find bottom left and top right corner
     
@@ -58,24 +56,10 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
             error('Error in switch marker_positions.topleft.index.') 
     end
     
-    v_a = centroids_xy(:, v_a_index)
-    v_b = centroids_xy(:, v_b_index)
+    v_a = centroids_xy(:, v_a_index);
+    v_b = centroids_xy(:, v_b_index);
     
-    %%%
-    figure;
-    hold on
-    axis('equal')
-    dy = 100;
-    scatter(v_topleft(1), v_topleft(2),'b')
-    text(v_topleft(1), v_topleft(2) + dy,'v_top_left', 'Interpreter', 'none')
-    scatter(v_a(1), v_a(2),'b')
-    text(v_a(1), v_a(2) + dy,'v_a', 'Interpreter', 'none')
-    scatter(v_b(1), v_b(2),'b')
-    text(v_b(1), v_b(2) + dy,'v_b', 'Interpreter', 'none')
-    
-    %%%
-    
-    rotation_angle = getAngleToXAxis(v_topleft, v_a)
+    rotation_angle = getAngleToXAxis(v_topleft, v_a);
     
     % rotate points by rotation angle
     [~ ,v_a_rotated, v_b_rotated] = rotateTriangleAroundFirstVertex(v_topleft, v_a, v_b, rotation_angle);
@@ -83,35 +67,16 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
     % make sure that v_a_rotated is right to v_topleft_rotated (in
     % x-direction)
     if (v_a_rotated(1) < v_topleft(1))
-        fprintf('rotate by 180°\n')
         % v_a_rotated is left to v_topleft_rotated => rotate by 180° = pi
         [~ ,v_a_rotated, v_b_rotated] = rotateTriangleAroundFirstVertex(v_topleft, v_a_rotated, v_b_rotated, pi);
-        
     end
-    
-    
-    v_topleft
-    v_a_rotated
-    v_b_rotated
-    
-    %%%
-    scatter(v_topleft(1), v_topleft(2),'r')
-    text(v_topleft(1), v_topleft(2) + dy,'v_topleft', 'Interpreter', 'none')
-    scatter(v_a_rotated(1), v_a_rotated(2),'r')
-    text(v_a_rotated(1), v_a_rotated(2) + dy,'v_a_rotated', 'Interpreter', 'none')
-    scatter(v_b_rotated(1), v_b_rotated(2),'r')
-    text(v_b_rotated(1), v_b_rotated(2) + dy,'v_b_rotated', 'Interpreter', 'none')
-    axis('equal')
-    %%%
     
     % check if the third point (v_b) is below or above this line (above/below = in
     % y-direction)
     if v_b_rotated(2) < v_topleft(2)
-        fprintf('v_b is below line\n');
         topright_index = v_a_index;
         bottomleft_index = v_b_index;
     else
-        fprintf('v_b is above line\n');
         topright_index = v_b_index;
         bottomleft_index = v_a_index;
     end
@@ -144,11 +109,10 @@ function [centroids] = getMarkerCentroidsAsMatrix(marker_stats)
 end
 
 function [angle] = getAngleToXAxis(p1, p2)
-    dx = p2(1) - p1(1)
-    dy = p2(2) - p1(2)
+    dx = p2(1) - p1(1);
+    dy = p2(2) - p1(2);
     angle = atan(dy./dx);
 end
-
 
 function [v1_rotated, v2_rotated, v3_rotated] = rotateTriangleAroundFirstVertex(v1, v2, v3, rotation_angle)
     center = v1;
@@ -171,20 +135,4 @@ function [v1_rotated, v2_rotated, v3_rotated] = rotateTriangleAroundFirstVertex(
     v2_rotated = v2_shifted_rotated + center;
     v3_rotated = v3_shifted_rotated + center;
 end
-
-% function [points_rotated] = rotatePointsAroundCenter2D(points, center, rotation_angle)
-%     center_matrix = repmat(center, 1, size(points, 2));
-%     % rotation matrix
-%     R = [cos(rotation_angle), -sin(rotation_angle); sin(rotation_angle), cos(rotation_angle)];
-%     
-%     % rotate around center
-%     % shift to center
-%     points_shifted = points - center_matrix;
-%     
-%     % rotate around center
-%     points_shifted_rotated = R * points_shifted;
-%     
-%     % shift back again
-%     points_rotated = points_shifted_rotated;
-% end
 
