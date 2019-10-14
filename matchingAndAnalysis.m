@@ -51,6 +51,48 @@ figure
 imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
 
 
+
+%% Image registration
+% get moving and control points
+control_points = getSortedMarkerPoints(marker_stats_clean);
+moving_points = getSortedMarkerPoints(marker_stats_material);
+
+% find transformation between points
+
+tform = fitgeotrans(moving_points, control_points, 'nonreflectivesimilarity');
+img_material_warped = imwarp(img_material, tform);
+
+figure
+imshowpair(img_clean, img_material_warped, 'montage')
+
+
+
+moved_points = zeros(3,2);
+[moved_points(:,1), moved_points(:,2)] = transformPointsInverse(tform, moving_points(:,1), moving_points(:,2));
+
+% plotting
+figure
+dy = 100;
+hold on
+scatter(control_points(1,1), control_points(1,2), 'b');
+text(control_points(1,1), control_points(1,2) + dy, '1 = topleft', 'Color','blue');
+scatter(control_points(2,1), control_points(2,2), 'b');
+text(control_points(2,1), control_points(2,2) + dy, '2 = topright', 'Color','blue');
+scatter(control_points(3,1), control_points(3,2), 'b');
+text(control_points(3,1), control_points(3,2) + dy, '3 = bottomleft', 'Color','blue');
+
+scatter(moving_points(1,1), moving_points(1,2), 'r');
+text(moving_points(1,1), moving_points(1,2) + dy, '1 = topleft', 'Color','red');
+scatter(moving_points(2,1), moving_points(2,2), 'r');
+text(moving_points(2,1), moving_points(2,2) + dy, '2 = topright', 'Color','red');
+scatter(moving_points(3,1), moving_points(3,2), 'r');
+text(moving_points(3,1), moving_points(3,2) + dy, '3 = bottomleft', 'Color','red');
+
+% check indexing
+
+
+
+
 %% MATCHING
 
 % we start here with a binary image and merge the two program parts later

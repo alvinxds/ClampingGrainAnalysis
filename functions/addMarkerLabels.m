@@ -1,4 +1,4 @@
-function [marker_stats] = addMarkerLabels(marker_stats)
+function [marker_stats] = addMarkerLabels(marker_stats, img_height)
     % the (rotated) image contains three markers. The three markers are
     % arranged in the same way as the markers of QR-Codes: one in the top
     % left corner, one in the bottom left and one in top right corner
@@ -38,7 +38,7 @@ function [marker_stats] = addMarkerLabels(marker_stats)
     % choose(arbitrarly) one of the two remaining (non top left) points and
     % then rotate the points, such that the line connecting v_topleft and
     % the chosen point is parallel to the x axis
-    % we call the point choosen point v_a and the third point v_b
+    % we call the point chosen point v_a and the third point v_b
         
     switch topleft_index
         case 1
@@ -57,27 +57,57 @@ function [marker_stats] = addMarkerLabels(marker_stats)
     v_a = centroids(:, v_a_index);
     v_b = centroids(:, v_b_index);
     
+    %%%
+    figure
+    hold on
+    dy = 100;
+    scatter(v_topleft(1), v_topleft(2),'b')
+    text(v_topleft(1), v_topleft(2) + dy,'v_top_left', 'Interpreter', 'none')
+    scatter(v_a(1), v_a(2),'b')
+    text(v_a(1), v_a(2) + dy,'v_a', 'Interpreter', 'none')
+    scatter(v_b(1), v_b(2),'b')
+    text(v_b(1), v_b(2) + dy,'v_b', 'Interpreter', 'none')
+    %%%
+    
     rotation_angle = getAngleToXAxis(v_topleft, v_a);
     
     % rotate points by rotation angle
-    [~, ~, v_b_rotated] = rotateTriangleAroundTopLeftVertex(v_topleft, v_a, v_b, rotation_angle);
+    [v_topleft_rotated, v_a_rotated, v_b_rotated] = rotateTriangleAroundTopLeftVertex(v_topleft, v_a, v_b, rotation_angle);
+    
+    %%%
+    scatter(v_topleft_rotated(1), v_topleft_rotated(2),'r')
+    text(v_topleft_rotated(1), v_topleft_rotated(2) + dy,'v_top_left_rotated', 'Interpreter', 'none')
+    scatter(v_a_rotated(1), v_a_rotated(2),'r')
+    text(v_a_rotated(1), v_a_rotated(2) + dy,'v_a_rotated', 'Interpreter', 'none')
+    scatter(v_b_rotated(1), v_b_rotated(2),'r')
+    text(v_b_rotated(1), v_b_rotated(2) + dy,'v_b_rotated', 'Interpreter', 'none')
+    %%%
     
     % check if the third point (v_b) is below or above this line (in
     % x-direction)
     if v_b_rotated(1) < v_topleft(1)
-        % v_b is below line
+        fprintf('v_b is below line\n');
         topright_index = v_a_index;
         bottomleft_index = v_b_index;
     else
+        fprintf('v_b is above line\n');
         topright_index = v_b_index;
         bottomleft_index = v_a_index;
     end
     
-    marker_stats(topleft_index).Label = 'top_left';
-    marker_stats(topright_index).Label = 'top_right';
-    marker_stats(bottomleft_index).Label = 'bottom_left';
+    marker_stats(topleft_index).Label = "top_left";
+    marker_stats(topright_index).Label = "top_right";
+    marker_stats(bottomleft_index).Label = "bottom_left";
         
 end
+
+
+function [points_xyCOS] = switchFromImgCOSToStandardXYCos(points_imgCOS, img_height)
+    points_xyCOS = points_imgCOS;
+    % for all y-points: invert axis
+    points_xyCOS(:,2) = img_height - points_xyCOS(:,2);
+end
+
 
 function [centroids] = getMarkerCentroidsAsMatrix(marker_stats)
     centroids = zeros(2,3);
