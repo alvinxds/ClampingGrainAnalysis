@@ -35,7 +35,7 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
             error('Error in switch d_max.')            
     end
     
-    v_topleft = centroids_xy(:,topleft_index)
+    v_topleft = centroids_xy(:,topleft_index);
     
     %% find bottom left and top right corner
     
@@ -58,8 +58,8 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
             error('Error in switch marker_positions.topleft.index.') 
     end
     
-    v_a = centroids_xy(:, v_a_index)
-    v_b = centroids_xy(:, v_b_index)
+    v_a = centroids_xy(:, v_a_index);
+    v_b = centroids_xy(:, v_b_index);
     
     %%%
     figure;
@@ -75,17 +75,16 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
     
     %%%
     
-    rotation_angle = getAngleToXAxis(v_topleft, v_a)
+    rotation_angle = getAngleToXAxis(v_topleft, v_a);
     
     % rotate points by rotation angle
     [~ ,v_a_rotated, v_b_rotated] = rotateTriangleAroundFirstVertex(v_topleft, v_a, v_b, rotation_angle);
     
-    % make sure that v_a_rotated is right to v_topleft_rotated (in
+    % make sure that v_a_rotated is left to v_topleft_rotated (in
     % x-direction)
     if (v_a_rotated(1) < v_topleft(1))
-        fprintf('rotate by 180°\n')
         % v_a_rotated is left to v_topleft_rotated => rotate by 180° = pi
-        [~ ,v_a_rotated, v_b_rotated] = rotateTriangleAroundFirstVertex(v_topleft, v_a_rotated, v_b_rotated, pi);
+        [~ ,v_a_rotated, v_b_rotated] = rotateTriangleAroundFirstVertex(v_topleft, v_a, v_b, pi);
         
     end
     
@@ -144,47 +143,47 @@ function [centroids] = getMarkerCentroidsAsMatrix(marker_stats)
 end
 
 function [angle] = getAngleToXAxis(p1, p2)
-    dx = p2(1) - p1(1)
-    dy = p2(2) - p1(2)
+    dx = p2(1) - p1(1);
+    dy = p2(2) - p1(2);
     angle = atan(dy./dx);
 end
 
 
 function [v1_rotated, v2_rotated, v3_rotated] = rotateTriangleAroundFirstVertex(v1, v2, v3, rotation_angle)
-    center = v1;
+    center_matrix = repmat(center, 1, size(points, 2));
     
-    % passive rotation matrix
-    R = [cos(rotation_angle), sin(rotation_angle); -sin(rotation_angle), cos(rotation_angle)];
+    % rotation matrix
+    R = [cos(rotation_angle), -sin(rotation_angle); sin(rotation_angle), cos(rotation_angle)];
     
     % shift to center
-    v1_shifted = v1 - center;
-    v2_shifted = v2 - center;
-    v3_shifted = v3 - center;
+    v1_shifted = v1 - v1;
+    v2_shifted = v2 - v1;
+    v3_shifted = v3 - v1;
     
     % rotate around center
     v1_shifted_rotated = R*v1_shifted;
-    v2_shifted_rotated = R*v2_shifted;
-    v3_shifted_rotated = R*v3_shifted;
+    
+    
+    
+    points_shifted_rotated = R * points_shifted;
     
     % shift back again
-    v1_rotated = v1_shifted_rotated + center;
-    v2_rotated = v2_shifted_rotated + center;
-    v3_rotated = v3_shifted_rotated + center;
+    points_rotated = points_shifted_rotated;
 end
 
-% function [points_rotated] = rotatePointsAroundCenter2D(points, center, rotation_angle)
-%     center_matrix = repmat(center, 1, size(points, 2));
-%     % rotation matrix
-%     R = [cos(rotation_angle), -sin(rotation_angle); sin(rotation_angle), cos(rotation_angle)];
-%     
-%     % rotate around center
-%     % shift to center
-%     points_shifted = points - center_matrix;
-%     
-%     % rotate around center
-%     points_shifted_rotated = R * points_shifted;
-%     
-%     % shift back again
-%     points_rotated = points_shifted_rotated;
-% end
+function [points_rotated] = rotatePointsAroundCenter2D(points, center, rotation_angle)
+    center_matrix = repmat(center, 1, size(points, 2));
+    % rotation matrix
+    R = [cos(rotation_angle), -sin(rotation_angle); sin(rotation_angle), cos(rotation_angle)];
+    
+    % rotate around center
+    % shift to center
+    points_shifted = points - center_matrix;
+    
+    % rotate around center
+    points_shifted_rotated = R * points_shifted;
+    
+    % shift back again
+    points_rotated = points_shifted_rotated;
+end
 
