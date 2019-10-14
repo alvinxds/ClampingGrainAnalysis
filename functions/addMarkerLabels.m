@@ -7,6 +7,10 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
     
     % Vertex positions of a triangle formed by the three marker centroids
     centroids = getMarkerCentroidsAsMatrix(marker_stats);
+    % switch from img coordinate system (COS) to standard xy COS
+    centroids_xy = transformToXYCOS(centroids, img_height);
+    
+    
     
     %% find top left corner
     % find the vertex that is on the opposite site of the
@@ -14,9 +18,9 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
     
     % the hypotenuse is the longest of the three lines, distance of the
     % vertexes (lines) are given by
-    d_12 = norm(centroids(:,2) - centroids(:,1));
-    d_23 = norm(centroids(:,3) - centroids(:,2));
-    d_31 = norm(centroids(:,1) - centroids(:,3));
+    d_12 = norm(centroids_xy(:,2) - centroids_xy(:,1));
+    d_23 = norm(centroids_xy(:,3) - centroids_xy(:,2));
+    d_31 = norm(centroids_xy(:,1) - centroids_xy(:,3));
     
     d_max = max([d_12, d_23, d_31]);
     
@@ -31,7 +35,7 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
             error('Error in switch d_max.')            
     end
     
-    v_topleft = centroids(:,topleft_index);
+    v_topleft = centroids_xy(:,topleft_index);
     
     %% find bottom left and top right corner
     
@@ -54,12 +58,13 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
             error('Error in switch marker_positions.topleft.index.') 
     end
     
-    v_a = centroids(:, v_a_index);
-    v_b = centroids(:, v_b_index);
+    v_a = centroids_xy(:, v_a_index);
+    v_b = centroids_xy(:, v_b_index);
     
     %%%
-    figure
+    figure;
     hold on
+    axis('equal')
     dy = 100;
     scatter(v_topleft(1), v_topleft(2),'b')
     text(v_topleft(1), v_topleft(2) + dy,'v_top_left', 'Interpreter', 'none')
@@ -67,12 +72,16 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
     text(v_a(1), v_a(2) + dy,'v_a', 'Interpreter', 'none')
     scatter(v_b(1), v_b(2),'b')
     text(v_b(1), v_b(2) + dy,'v_b', 'Interpreter', 'none')
+    
     %%%
     
     rotation_angle = getAngleToXAxis(v_topleft, v_a);
     
     % rotate points by rotation angle
     [v_topleft_rotated, v_a_rotated, v_b_rotated] = rotateTriangleAroundTopLeftVertex(v_topleft, v_a, v_b, rotation_angle);
+    v_topleft_rotated
+    v_a_rotated
+    v_b_rotated
     
     %%%
     scatter(v_topleft_rotated(1), v_topleft_rotated(2),'r')
@@ -81,11 +90,12 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
     text(v_a_rotated(1), v_a_rotated(2) + dy,'v_a_rotated', 'Interpreter', 'none')
     scatter(v_b_rotated(1), v_b_rotated(2),'r')
     text(v_b_rotated(1), v_b_rotated(2) + dy,'v_b_rotated', 'Interpreter', 'none')
+    axis('equal')
     %%%
     
-    % check if the third point (v_b) is below or above this line (in
-    % x-direction)
-    if v_b_rotated(1) < v_topleft(1)
+    % check if the third point (v_b) is below or above this line (above/below = in
+    % y-direction)
+    if v_b_rotated(2) < v_topleft(2)
         fprintf('v_b is below line\n');
         topright_index = v_a_index;
         bottomleft_index = v_b_index;
@@ -102,16 +112,22 @@ function [marker_stats] = addMarkerLabels(marker_stats, img_height)
 end
 
 
-function [points_xyCOS] = switchFromImgCOSToStandardXYCos(points_imgCOS, img_height)
-    points_xyCOS = points_imgCOS;
-    % for all y-points: invert axis
-    points_xyCOS(:,2) = img_height - points_xyCOS(:,2);
+function [centroids_xy] = transformToXYCOS(centroids, img_height)
+    n_marker = length(centroids);
+    centroids_xy = zeros(2,n_marker);
+    
+    for i = 1:n_marker
+        % x-orientation remains the same
+        centroids_xy(1, i) = centroids(1,i);
+        % y-axis is inverted
+        centroids_xy(2,i) = img_height - centroids(2,i);
+    end
 end
 
-
 function [centroids] = getMarkerCentroidsAsMatrix(marker_stats)
-    centroids = zeros(2,3);
-    for i = 1:3
+    n_marker = length(marker_stats);
+    centroids = zeros(2,n_marker);
+    for i = 1:n_marker
        centroids(:,i) = marker_stats(i).Centroid'; 
     end
 end
@@ -119,7 +135,7 @@ end
 function [angle] = getAngleToXAxis(p1, p2)
     dx = p2(1) - p1(1);
     dy = p2(2) - p1(2);
-    angle = atan(dx./dy);
+    angle = atan(dy./dx);
 end
 
 function [p1_rotated, p2_rotated, p3_rotated] = rotateTriangleAroundTopLeftVertex(p1, p2, p3, rotation_angle)
@@ -138,5 +154,11 @@ function [p1_rotated, p2_rotated, p3_rotated] = rotateTriangleAroundTopLeftVerte
     p1_rotated = p1_rotated_0 + p1;
     p2_rotated = p2_rotated_0 + p1;
     p3_rotated = p3_rotated_0 + p1;
+    
+    % make sure that p1 is left to p2 => otherwise rotate by 180°
+    if p2_rotated(1) < p1_rotated(1) 
+        [p1_rotated, p2_rotated, p3_rotated] = rotateTriangleAroundTopLeftVertex(p1_rotated, p2_rotated, p3_rotated, pi);
+    end
+    
 end
 
