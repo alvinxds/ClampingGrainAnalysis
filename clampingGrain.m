@@ -7,13 +7,9 @@ clc
 % add functions from subfolder and load settings
 addpath(genpath('.\functions'));
 load('settings.mat')
-
-N_MARKER = 3;
-MARKER_RADIUS_MM = 18; %mm
+load('marker/markerSettings.mat')
 
 FOLDER_TO_SAVE_XLSX = 'Z:\git\Klemmkornauswertung'; % replace by folder from UI later on
-
-global_calibfactor = 2; %[mm/px], replace automatically later on
 
 %% Loading of images
 
