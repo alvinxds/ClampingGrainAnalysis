@@ -14,9 +14,6 @@ function [marker_thresholds] = getMarkerThresholds(img_marker, N_TIMES_STD)
     std_marker = std(colors_marker,0,1);
     mean_marker_color = mean(colors_marker,1);
 
-    % defines confidence intervalls and therefore upper and lower thresholds
-    N_TIMES_STD = 3;
-
     % Upper and lower thresholds
     for i = 1:n_rgb_channels % go trough all RGB channels
         % assuming a gaussian distribution of the marker colors, we calculate
