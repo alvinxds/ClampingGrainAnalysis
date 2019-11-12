@@ -1,4 +1,4 @@
-function [overall_stats_export] = calcOverallStats(object_stats)
+function [overall_stats] = calcOverallStats(object_stats)
     % Free area in clean image [px]
     overall_stats.TotalFreeAreaCleanImage_px = sum([object_stats.CleanArea_px]);
     

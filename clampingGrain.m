@@ -11,6 +11,7 @@ load('marker/markerSettings.mat')
 
 STARTING_FOLDER = 'C:\Users\Nils Kröll\sciebo\IAR\Kay Johnen\Klemmkornauswertung'; % replace by folder from UI later on
 
+
 %% Loading of images
 
 % get clean image from UI
@@ -18,7 +19,7 @@ STARTING_FOLDER = 'C:\Users\Nils Kröll\sciebo\IAR\Kay Johnen\Klemmkornauswertung
 
 % get material image from UI
 [img_material, path_material_img, filename_material_img] = readImgFromUI('Select image of sieving surface with clamping grain.', updated_starting_folder);
-
+tic
 % the results are saved in the material img folder:
 path_xlsx = path_material_img;
 clear path_material_img
@@ -40,7 +41,11 @@ marker_stats_clean = getMarkerStats(img_clean, marker_thresholds, N_MARKER);
 marker_stats_material = getMarkerStats(img_material, marker_thresholds, N_MARKER);
 
 
-
+% show found markers
+img_clean_with_marker = drawMarkerPositionsOnImg(img_clean,marker_stats_clean);
+img_material_with_marker = drawMarkerPositionsOnImg(img_material,marker_stats_material);
+figure;
+imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
 
 %% Crop images
 % align images, s.t. top_left and top_right corner are on one line parallel
@@ -104,16 +109,19 @@ stats_material_transformed = applyFitGeoTransformation(stats_material, tform);
 [stats_clean,stats_material_transformed] = addNearestRegionToStats(stats_clean,stats_material_transformed);
 [stats_clean,stats_material_transformed] = addAreasOfCorrespondingRegionToStats(stats_clean,stats_material_transformed);
 
+% visualisation
+scatterCentroids(stats_clean,stats_material_transformed);
+
 %% ANALYSIS
 
 % object stats (sieving holes)
-object_stats = calcObjectStats(stats_clean, global_calibfactor_clean);
+object_stats = calcObjectStats(stats_clean, global_calibfactor_clean, global_calibfactor_material);
 
 % counting of sieving holes with specific coverage
 counting_stats = getCountingStats(object_stats, COVERAGE_CLASS_EDGES);
 
 % overall stats
-overall_stats = calcOverallStats(overall_stats, global_calibfactor_clean);
+overall_stats = calcOverallStats(object_stats);
 
 
 % export stats as .xlsx
@@ -121,3 +129,4 @@ saveResultsAsXLSX(object_stats, overall_stats, counting_stats, fullfilename_xlsx
 
 fprintf('Results:\n')
 dispLinkToFolder(fullfilename_xlsx)
+toc
