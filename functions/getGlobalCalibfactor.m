@@ -1,9 +1,9 @@
 function [global_calibfactor] = getGlobalCalibfactor(marker_stats, MARKER_RADIUS_MM)
-    % get boundingbox measurements = radii
+    % get boundingbox measurements = 2 * radii
     n_marker = length(marker_stats);
     for i = 1:n_marker
-        radii_x(i,1) = marker_stats(i).BoundingBox(3);
-        radii_y(i,1) = marker_stats(i).BoundingBox(4);
+        radii_x(i,1) = marker_stats(i).BoundingBox(3)./2;
+        radii_y(i,1) = marker_stats(i).BoundingBox(4)./2;
     end
 
     % combine x and y radii

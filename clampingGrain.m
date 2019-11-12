@@ -39,9 +39,6 @@ marker_thresholds = getMarkerThresholds(img_marker_color, 6);
 marker_stats_clean = getMarkerStats(img_clean, marker_thresholds, N_MARKER);
 marker_stats_material = getMarkerStats(img_material, marker_thresholds, N_MARKER);
 
-% calculate the global calibration factor based on the known radius of the
-% marker
-global_calibfactor = getGlobalCalibfactor(marker_stats_clean, MARKER_RADIUS_MM);
 
 
 
@@ -71,6 +68,11 @@ imshowpair(img_clean_cropped, img_material_cropped, 'montage');
 marker_stats_clean = getMarkerStats(img_clean_cropped, marker_thresholds, N_MARKER);
 marker_stats_material = getMarkerStats(img_material_cropped, marker_thresholds, N_MARKER);
 
+% calculate the global calibration factor based on the known radius of the
+% marker
+global_calibfactor_clean = getGlobalCalibfactor(marker_stats_clean, MARKER_RADIUS_MM);
+global_calibfactor_material = getGlobalCalibfactor(marker_stats_material, MARKER_RADIUS_MM);
+
 
 %% Image registration: Match clean and material image ontop of each other
 % get moving and control points
@@ -96,27 +98,26 @@ stats_to_be_calculated = {'Centroid', 'Area'};
 stats_clean = regionprops(bw_clean, stats_to_be_calculated);
 stats_material = regionprops(bw_material, stats_to_be_calculated);
 
-[stats_clean,stats_material] = addNearestRegionToStats(stats_clean,stats_material);
-[stats_clean,stats_material] = addAreasOfCorrespondingRegionToStats(stats_clean,stats_material);
+% apply tform for material centroids
+stats_material_transformed = applyFitGeoTransformation(stats_material, tform);
+
+[stats_clean,stats_material_transformed] = addNearestRegionToStats(stats_clean,stats_material_transformed);
+[stats_clean,stats_material_transformed] = addAreasOfCorrespondingRegionToStats(stats_clean,stats_material_transformed);
 
 %% ANALYSIS
-[stats_clean] = addRelativeCoverageToStats(stats_clean);
 
-% overall stats
-overall_stats.TotalFreeAreaCleanImage_px = sum([stats_clean.Area]);
-overall_stats.TotalFreeAreaMaterialImage_px = sum([stats_clean.AreaMaterialImage]);
-overall_stats.TotalCoveredArea_px = overall_stats.TotalFreeAreaCleanImage_px - overall_stats.TotalFreeAreaMaterialImage_px;
+% object stats (sieving holes)
+object_stats = calcObjectStats(stats_clean, global_calibfactor_clean);
 
 % counting of sieving holes with specific coverage
-counting_stats = getCountingStats(stats_clean, COVERAGE_CLASS_EDGES);
+counting_stats = getCountingStats(object_stats, COVERAGE_CLASS_EDGES);
 
-% prepare stats for export to .xlsx - file
-object_stats_export = prepareObjectStatsForExport(stats_clean, global_calibfactor);
-overall_stats_export = prepareOverallStatsForExport(overall_stats, global_calibfactor);
-counting_stats_export = counting_stats;
+% overall stats
+overall_stats = calcOverallStats(overall_stats, global_calibfactor_clean);
+
 
 % export stats as .xlsx
-saveResultsAsXLSX(object_stats_export, overall_stats_export, counting_stats_export, fullfilename_xlsx)
+saveResultsAsXLSX(object_stats, overall_stats, counting_stats, fullfilename_xlsx)
 
 fprintf('Results:\n')
 dispLinkToFolder(fullfilename_xlsx)
