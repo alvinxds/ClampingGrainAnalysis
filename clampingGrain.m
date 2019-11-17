@@ -87,14 +87,18 @@ moving_points = getSortedMarkerPoints(marker_stats_material);
 % find transformation between points
 tform = fitgeotrans(moving_points, control_points, 'nonreflectivesimilarity');
 
+% transform image
+
+img_material_cropped_warped = imwarp(img_material_cropped,tform,'OutputView',imref2d(size(img_clean_cropped)));
+
 
 %% SEGMENTATION
 
 % Segmentation
 bw_clean = imbinarize(rgb2gray(img_clean_cropped));
-bw_material = imbinarize(rgb2gray(img_material_cropped));
+bw_material = imbinarize(rgb2gray(img_material_cropped_warped));
 figure;
-imshowpair(bw_clean, bw_material, 'montage');
+imshowpair(bw_clean, bw_material, 'falsecolor');
 
 
 %% MATCHING
