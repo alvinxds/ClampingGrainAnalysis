@@ -1,6 +1,6 @@
 function [marker_stats] = getMarkerStats(img_clean, marker_thresholds, N_MARKER)
     % marker thresholding
-    bw_marker_cleanimg = getBinaryMarkerImage(img_clean, marker_thresholds);
+    bw_marker_cleanimg = segmentedBasedOnThresholds(img_clean, marker_thresholds);
     clear structuring_element_size structuring_element
 
     marker_stats = regionprops(bw_marker_cleanimg, {'Area', 'BoundingBox'});

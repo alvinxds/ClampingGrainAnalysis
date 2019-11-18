@@ -1,4 +1,4 @@
-function [bw_marker, bw_channelwise] = getBinaryMarkerImage(img, marker_thresholds, structuring_element)
+function [bw_marker, bw_channelwise] = segmentedBasedOnThresholds(img, segmentation_thresholds, structuring_element)
 
     if nargin < 3
         apply_bw_closing = false;
@@ -12,7 +12,7 @@ function [bw_marker, bw_channelwise] = getBinaryMarkerImage(img, marker_threshol
 
     % binary image for each color channel
     for i = 1:n_rgb_channels
-        bw_channelwise(:,:,i) = (img(:,:,i) > marker_thresholds(i).lower) & (img(:,:,i) < marker_thresholds(i).upper);  
+        bw_channelwise(:,:,i) = (img(:,:,i) > segmentation_thresholds(i).lower) & (img(:,:,i) < segmentation_thresholds(i).upper);  
         % apply closing to channel bw
         if apply_bw_closing == true
             bw_channelwise(:,:,i) = imclose(bw_channelwise(:,:,i), structuring_element);

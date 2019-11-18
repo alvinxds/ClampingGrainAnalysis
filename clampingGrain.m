@@ -11,6 +11,8 @@ load('marker/markerSettings.mat')
 
 STARTING_FOLDER = 'C:\Users\Nils Kröll\sciebo\IAR\Kay Johnen\Klemmkornauswertung'; % replace by folder from UI later on
 
+MIN_SIEVING_HOLES_SIZE_mm2 = pi./4 .* 2.^2;
+
 
 %% Loading of images
 
@@ -75,8 +77,7 @@ marker_stats_material = getMarkerStats(img_material_cropped, marker_thresholds, 
 
 % calculate the global calibration factor based on the known radius of the
 % marker
-global_calibfactor_clean = getGlobalCalibfactor(marker_stats_clean, MARKER_RADIUS_MM);
-global_calibfactor_material = getGlobalCalibfactor(marker_stats_material, MARKER_RADIUS_MM);
+global_calibfactor = getGlobalCalibfactor(marker_stats_clean, MARKER_RADIUS_MM);
 
 
 %% Image registration: Match clean and material image ontop of each other
@@ -88,7 +89,6 @@ moving_points = getSortedMarkerPoints(marker_stats_material);
 tform = fitgeotrans(moving_points, control_points, 'nonreflectivesimilarity');
 
 % transform image
-
 img_material_cropped_warped = imwarp(img_material_cropped,tform,'OutputView',imref2d(size(img_clean_cropped)));
 
 
@@ -96,30 +96,38 @@ img_material_cropped_warped = imwarp(img_material_cropped,tform,'OutputView',imr
 
 % Segmentation
 bw_clean = imbinarize(rgb2gray(img_clean_cropped));
-bw_material = imbinarize(rgb2gray(img_material_cropped_warped));
-figure;
-imshowpair(bw_clean, bw_material, 'falsecolor');
+bw_material_old_method = imbinarize(rgb2gray(img_material_cropped_warped));
 
+background_thresholds = getBackgroundThresholds(img_clean_cropped, bw_clean, 2.5);
+
+bw_material_new_method = segmentedBasedOnThresholds(img_material_cropped_warped, background_thresholds);
+
+% % preprocess bw_clean
+% bw_clean_preprocessed = preprocessBWClean(bw_clean, MIN_SIEVING_HOLES_SIZE_mm2, global_calibfactor);
+
+% % preprocess bw_material
+% bw_material_preprocessed = preprocessBWMaterial(bw_material,bw_clean_preprocessed);
+
+figure
+imshowpair(bw_material_old_method, bw_material_new_method, 'falsecolor');
+figure
+imshow(img_material_cropped_warped)
 
 %% MATCHING
 
 stats_to_be_calculated = {'Centroid', 'Area'};
-stats_clean = regionprops(bw_clean, stats_to_be_calculated);
-stats_material = regionprops(bw_material, stats_to_be_calculated);
+stats_clean = regionprops(bw_clean_preprocessed, stats_to_be_calculated);
+stats_material = regionprops(bw_material_preprocessed, stats_to_be_calculated);
 
-% apply tform for material centroids
-stats_material_transformed = applyFitGeoTransformation(stats_material, tform);
+[stats_clean,stats_material] = addNearestRegionToStats(stats_clean,stats_material);
+[stats_clean,stats_material] = addAreasOfCorrespondingRegionToStats(stats_clean,stats_material);
 
-[stats_clean,stats_material_transformed] = addNearestRegionToStats(stats_clean,stats_material_transformed);
-[stats_clean,stats_material_transformed] = addAreasOfCorrespondingRegionToStats(stats_clean,stats_material_transformed);
 
-% visualisation
-scatterCentroids(stats_clean,stats_material_transformed);
 
 %% ANALYSIS
 
 % object stats (sieving holes)
-object_stats = calcObjectStats(stats_clean, global_calibfactor_clean, global_calibfactor_material);
+object_stats = calcObjectStats(stats_clean, global_calibfactor);
 
 % counting of sieving holes with specific coverage
 counting_stats = getCountingStats(object_stats, COVERAGE_CLASS_EDGES);
