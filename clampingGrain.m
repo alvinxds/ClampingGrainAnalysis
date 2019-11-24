@@ -9,11 +9,14 @@ addpath(genpath('.\functions'));
 load('settings.mat')
 load('marker/markerSettings.mat')
 
+
+% Settings
 STARTING_FOLDER = 'C:\Users\Nils Kröll\sciebo\IAR\Klemmkornauswertung\Testbilder Programmentwicklung\Bilder Testsiebung 20191118-1605';
+COVERAGE_CLASS_EDGES = [0,eps,0.1,0.9,1];
 
-MIN_SIEVING_HOLES_SIZE_mm2 = pi./4 .* 2.^2;
 
-
+MARKER_RADIUS_MM = 18; % mm
+N_MARKER = 3;
 
 %% Loading of images
 
