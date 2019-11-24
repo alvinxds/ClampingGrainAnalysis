@@ -1,7 +1,4 @@
-function img_cropped = cropImageBasedOnMarkerPositions(img_rotated, marker_stats)
-
-    % get marker positions
-    MARKER_MARGIN = 20; % px
+function img_cropped = cropImageBasedOnMarkerPositions(img_rotated, marker_stats, MARKER_MARGIN_CROP)
     
     % get the Bounding Box Position of each marker
     bb_pos_top_left = getMarkerBB(marker_stats, 'top_left');
@@ -46,12 +43,12 @@ function img_cropped = cropImageBasedOnMarkerPositions(img_rotated, marker_stats
     img_height = size(img_rotated, 1);
     img_width = size(img_rotated, 2);
     
-    left_cutting_pos = max(left_cutting_pos - MARKER_MARGIN, 0); % use max(x, 0) to make sure that cutting positions are in the image
-    top_cutting_pos = max(top_cutting_pos - MARKER_MARGIN, 0); % "
-    cutting_width = min(right_cutting_pos - left_cutting_pos + MARKER_MARGIN, img_width - left_cutting_pos);% use max(x, width - left) to make sure that cutting positions are in the image
-    cutting_height = min(bottom_cutting_pos - top_cutting_pos + MARKER_MARGIN, img_height - top_cutting_pos); % "
+    left_cutting_pos = max(left_cutting_pos - MARKER_MARGIN_CROP, 0); % use max(x, 0) to make sure that cutting positions are in the image
+    top_cutting_pos = max(top_cutting_pos - MARKER_MARGIN_CROP, 0); % "
+    cutting_width = min(right_cutting_pos - left_cutting_pos + MARKER_MARGIN_CROP, img_width - left_cutting_pos);% use max(x, width - left) to make sure that cutting positions are in the image
+    cutting_height = min(bottom_cutting_pos - top_cutting_pos + MARKER_MARGIN_CROP, img_height - top_cutting_pos); % "
     
-    img_cropped = imcrop(img_rotated, [left_cutting_pos, top_cutting_pos, cutting_width, cutting_width]);    
+    img_cropped = imcrop(img_rotated, [left_cutting_pos, top_cutting_pos, cutting_width, cutting_height]);    
     
 end
 

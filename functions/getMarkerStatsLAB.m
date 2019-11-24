@@ -15,8 +15,7 @@ function [marker_stats, bw_marker] = getMarkerStatsLAB(img_rgb, marker_mean_colo
     marker_stats = addMarkerLabels(marker_stats, size(img_rgb,1));   
 end
 
-function [marker_stats] = addMarkerCentroidBB(marker_stats)
-    
+function [marker_stats] = addMarkerCentroidBB(marker_stats)    
     n_marker = length(marker_stats);
     
     for i = 1:n_marker
