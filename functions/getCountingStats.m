@@ -1,5 +1,5 @@
-function [counting_stats] = getCountingStats(stats_clean, COVERAGE_CLASS_EDGES)
-    relative_coverage = [stats_clean.RelativeCoverage]';
+function [counting_stats] = getCountingStats(object_stats, COVERAGE_CLASS_EDGES)
+    relative_coverage = [object_stats.RelativeCoverage]';
     counted_holes = histcounts(relative_coverage, COVERAGE_CLASS_EDGES);
     
     n_edges = length(COVERAGE_CLASS_EDGES);
