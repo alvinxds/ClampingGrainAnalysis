@@ -1,6 +1,6 @@
-function [marker_stats, bw_marker_cleanimg] = getMarkerStats(img_clean, marker_thresholds, N_MARKER)
+function [marker_stats, bw_marker_cleanimg] = getMarkerStatsHSV(img_clean_hsv, marker_thresholds_hsv, N_MARKER)
     % marker thresholding
-    bw_marker_cleanimg = segmentedBasedOnThresholds(img_clean, marker_thresholds);
+    bw_marker_cleanimg = segmentedBasedOnThresholdsHSV(img_clean_hsv, marker_thresholds_hsv);
     clear structuring_element_size structuring_element
 
     marker_stats = regionprops(bw_marker_cleanimg, {'Area', 'BoundingBox'});
@@ -14,7 +14,7 @@ function [marker_stats, bw_marker_cleanimg] = getMarkerStats(img_clean, marker_t
     marker_stats = addMarkerCentroidBB(marker_stats);
     
     % identify topleft, topright and bottomright marker
-    marker_stats = addMarkerLabels(marker_stats, size(img_clean,1));   
+    marker_stats = addMarkerLabels(marker_stats, size(img_clean_hsv,1));   
     
 end
 

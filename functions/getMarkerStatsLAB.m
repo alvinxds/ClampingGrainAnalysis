@@ -1,9 +1,7 @@
-function [marker_stats, bw_marker_cleanimg] = getMarkerStats(img_clean, marker_thresholds, N_MARKER)
+function [marker_stats, bw_marker] = getMarkerStatsLAB(img_rgb, marker_mean_colorvalue, threshold_lab_distance, N_MARKER)
     % marker thresholding
-    bw_marker_cleanimg = segmentedBasedOnThresholds(img_clean, marker_thresholds);
-    clear structuring_element_size structuring_element
-
-    marker_stats = regionprops(bw_marker_cleanimg, {'Area', 'BoundingBox'});
+    bw_marker = segmentBasedOnLABDistance(img_rgb, marker_mean_colorvalue, threshold_lab_distance);  
+    marker_stats = regionprops(bw_marker, {'Area', 'BoundingBox'});
 
     % sort by area to find markers (biggest elements)
     [~, sort_index] = sort([marker_stats.Area], 'descend');
@@ -14,8 +12,7 @@ function [marker_stats, bw_marker_cleanimg] = getMarkerStats(img_clean, marker_t
     marker_stats = addMarkerCentroidBB(marker_stats);
     
     % identify topleft, topright and bottomright marker
-    marker_stats = addMarkerLabels(marker_stats, size(img_clean,1));   
-    
+    marker_stats = addMarkerLabels(marker_stats, size(img_rgb,1));   
 end
 
 function [marker_stats] = addMarkerCentroidBB(marker_stats)

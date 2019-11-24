@@ -9,9 +9,10 @@ addpath(genpath('.\functions'));
 load('settings.mat')
 load('marker/markerSettings.mat')
 
-STARTING_FOLDER = 'C:\Users\Nils Kröll\sciebo\IAR\Kay Johnen\Klemmkornauswertung'; % replace by folder from UI later on
+STARTING_FOLDER = 'C:\Users\Nils Kröll\sciebo\IAR\Klemmkornauswertung\Testbilder Programmentwicklung\Bilder Testsiebung 20191118-1605';
 
 MIN_SIEVING_HOLES_SIZE_mm2 = pi./4 .* 2.^2;
+
 
 
 %% Loading of images
@@ -41,7 +42,6 @@ marker_thresholds = getMarkerThresholds(img_marker_color, 6);
 % get marker positions and stats
 marker_stats_clean = getMarkerStats(img_clean, marker_thresholds, N_MARKER);
 marker_stats_material = getMarkerStats(img_material, marker_thresholds, N_MARKER);
-
 
 % show found markers
 img_clean_with_marker = drawMarkerPositionsOnImg(img_clean,marker_stats_clean);
@@ -96,11 +96,7 @@ img_material_cropped_warped = imwarp(img_material_cropped,tform,'OutputView',imr
 
 % Segmentation
 bw_clean = imbinarize(rgb2gray(img_clean_cropped));
-bw_material_old_method = imbinarize(rgb2gray(img_material_cropped_warped));
-
-background_thresholds = getBackgroundThresholds(img_clean_cropped, bw_clean, 2.5);
-
-bw_material_new_method = segmentedBasedOnThresholds(img_material_cropped_warped, background_thresholds);
+bw_material = imbinarize(rgb2gray(img_material_cropped_warped));
 
 % % preprocess bw_clean
 % bw_clean_preprocessed = preprocessBWClean(bw_clean, MIN_SIEVING_HOLES_SIZE_mm2, global_calibfactor);
@@ -109,7 +105,7 @@ bw_material_new_method = segmentedBasedOnThresholds(img_material_cropped_warped,
 % bw_material_preprocessed = preprocessBWMaterial(bw_material,bw_clean_preprocessed);
 
 figure
-imshowpair(bw_material_old_method, bw_material_new_method, 'falsecolor');
+imshowpair(bw_clean, bw_material, 'montage');
 figure
 imshow(img_material_cropped_warped)
 
