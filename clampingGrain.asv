@@ -37,7 +37,6 @@ filename_xlsx = getXLSXFilename(filename_material_img);
 
 % full filename is then given by:
 fullfilename_xlsx = fullfile(path_xlsx, filename_xlsx);
-fprintf(' done!\n')
 
 %% MARKER DETECTION
 fprintf('Detecting markers ... ')
