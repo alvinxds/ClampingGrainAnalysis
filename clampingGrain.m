@@ -17,7 +17,7 @@ MARKER_RADIUS_MM = 18; % mm
 N_MARKER = 3;
 
 % Marker detection
-N_TIMES_MAX_LAB_DISTANCE = 4;
+N_TIMES_MAX_LAB_DISTANCE = 3;
 MARKER_MARGIN_CROP = 20; %px
 
 %% LOADING OF IMAGES
@@ -49,11 +49,6 @@ img_marker = imread('marker/marker_color.jpg');
 marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
 marker_stats_material = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
 
-% show found markers
-img_clean_with_marker = drawMarkerPositionsOnImg(img_clean, marker_stats_clean);
-img_material_with_marker = drawMarkerPositionsOnImg(img_material, marker_stats_material);
-figure
-imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
 fprintf(' done!\n')
 
 %% ROTATE AND CROP IMAGES
@@ -67,12 +62,6 @@ img_material_rotated = rotateImageBasedOnMarkerPositions(img_material, marker_st
 marker_stats_clean = getMarkerStatsLAB(img_clean_rotated, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
 marker_stats_material = getMarkerStatsLAB(img_material_rotated, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
 
-% show found markers
-img_clean_with_marker = drawMarkerPositionsOnImg(img_clean_rotated,marker_stats_clean);
-img_material_with_marker = drawMarkerPositionsOnImg(img_material_rotated,marker_stats_material);
-figure
-imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
-
 % crop images
 img_clean_cropped = cropImageBasedOnMarkerPositions(img_clean_rotated, marker_stats_clean, MARKER_MARGIN_CROP);
 img_material_cropped = cropImageBasedOnMarkerPositions(img_material_rotated, marker_stats_material, MARKER_MARGIN_CROP);
@@ -82,6 +71,13 @@ imshowpair(img_clean_cropped, img_material_cropped, 'montage')
 % update marker positions and stats for rotated and cropped image
 marker_stats_clean = getMarkerStatsLAB(img_clean_cropped, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
 marker_stats_material = getMarkerStatsLAB(img_material_cropped, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+
+% show found markers
+img_clean_with_marker = drawMarkerPositionsOnImg(img_clean_cropped, marker_stats_clean);
+img_material_with_marker = drawMarkerPositionsOnImg(img_material_cropped, marker_stats_material);
+figure
+imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
+fprintf(' done!\n')
 
 % calculate the global calibration factor based on the known radius of the
 % marker
@@ -108,41 +104,45 @@ fprintf('Segmentation of both images ... ')
 bw_clean = imbinarize(rgb2gray(img_clean_cropped));
 bw_material = imbinarize(rgb2gray(img_material_cropped_warped));
 
-
 figure
 imshowpair(bw_clean, bw_material, 'montage');
-figure
-imshowpair(bw_clean, bw_material, 'falsecolor');
-figure
-imshow(img_material_cropped_warped)
+
 fprintf(' done!\n')
 
 %% MATCHING
-fprintf('Matching of detected sieving holes ... ')
-stats_to_be_calculated = {'Centroid', 'Area'};
-stats_clean = regionprops(bw_clean, stats_to_be_calculated);
-stats_material = regionprops(bw_material, stats_to_be_calculated);
+% fprintf('Matching of detected sieving holes ... ')
+% stats_to_be_calculated = {'Centroid', 'Area'};
+% stats_clean = regionprops(bw_clean, stats_to_be_calculated);
+% stats_material = regionprops(bw_material, stats_to_be_calculated);
+% 
+% [stats_clean,stats_material] = addNearestRegionToStats(stats_clean,stats_material);
+% [stats_clean,stats_material] = addAreasOfCorrespondingRegionToStats(stats_clean,stats_material);
+% 
+% fprintf(' done!\n')
 
-[stats_clean,stats_material] = addNearestRegionToStats(stats_clean,stats_material);
-[stats_clean,stats_material] = addAreasOfCorrespondingRegionToStats(stats_clean,stats_material);
+%% OVERLAY MASKS
+fprintf('Overlaying masks ... ')
+overlay_image = overlayMasks(bw_clean, bw_material);
+
+figure
+imshow(overlay_image)
 
 fprintf(' done!\n')
-
 %% ANALYSIS
-fprintf('Analysis of detected clamping grain ... ')
-% object stats (sieving holes)
-object_stats = calcObjectStats(stats_clean, global_calibfactor);
-
-% counting of sieving holes with specific coverage
-counting_stats = getCountingStats(object_stats, COVERAGE_CLASS_EDGES);
-
-% overall stats
-overall_stats = calcOverallStats(object_stats);
-
-
-% export stats as .xlsx
-saveResultsAsXLSX(object_stats, overall_stats, counting_stats, fullfilename_xlsx)
-fprintf(' done!\n')
-fprintf('Results:\n')
-dispLinkToFolder(fullfilename_xlsx)
-toc
+% fprintf('Analysis of detected clamping grain ... ')
+% % object stats (sieving holes)
+% object_stats = calcObjectStats(stats_clean, global_calibfactor);
+% 
+% % counting of sieving holes with specific coverage
+% counting_stats = getCountingStats(object_stats, COVERAGE_CLASS_EDGES);
+% 
+% % overall stats
+% overall_stats = calcOverallStats(object_stats);
+% 
+% 
+% % export stats as .xlsx
+% saveResultsAsXLSX(object_stats, overall_stats, counting_stats, fullfilename_xlsx)
+% fprintf(' done!\n')
+% fprintf('Results:\n')
+% dispLinkToFolder(fullfilename_xlsx)
+% toc
