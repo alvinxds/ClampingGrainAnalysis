@@ -1,7 +1,7 @@
 function [marker_stats, bw_marker] = getMarkerStatsLAB(img_rgb, marker_mean_colorvalue, threshold_lab_distance, N_MARKER)
     % marker thresholding
     bw_marker = segmentBasedOnLABDistance(img_rgb, marker_mean_colorvalue, threshold_lab_distance);  
-    marker_stats = regionprops(bw_marker, {'Area', 'BoundingBox'});
+    marker_stats = regionprops(bw_marker, {'Area', 'BoundingBox','ConvexHull'});
 
     % sort by area to find markers (biggest elements)
     [~, sort_index] = sort([marker_stats.Area], 'descend');
