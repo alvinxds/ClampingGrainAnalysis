@@ -9,7 +9,7 @@ addpath(genpath('.\functions'));
 
 
 % Settings
-STARTING_FOLDER = 'C:\Users\Nils Kröll\sciebo\IAR\Klemmkorn Paper\020 Messreihen\001 SSF fein\Bilder Siebboden\clean';
+STARTING_FOLDER = 'C:\Users\Nils Kröll\sciebo\IAR\Klemmkorn Paper\020 Messreihen\001 SSF fein\Bilder Siebboden';
 COVERAGE_CLASS_EDGES = [0,eps,0.1,0.9,1];
 
 % Settings Marker
@@ -17,7 +17,7 @@ MARKER_RADIUS_MM = 18; % mm
 N_MARKER = 3;
 
 % Marker detection
-LAB_DISTANCE = 22;
+LAB_DISTANCE = 25;
 MARKER_MARGIN_CROP = 20; % px
 
 %% LOADING OF IMAGES
@@ -49,32 +49,34 @@ marker_stats_material = getMarkerStatsLAB(img_material, marker_mean_colorvalue_l
 
 fprintf(' done!\n')
 
+img_clean_org = img_clean;
+img_material_org = img_material;
 %% ROTATE AND CROP IMAGES
 fprintf('Rotating  and cropping images ... ')
 % align images, s.t. top_left and top_right corner are on one line parallel
 % to the x-axis and bottom_left is below that line
-img_clean_rotated = rotateImageBasedOnMarkerPositions(img_clean, marker_stats_clean);
-img_material_rotated = rotateImageBasedOnMarkerPositions(img_material, marker_stats_material);
+img_clean = rotateImageBasedOnMarkerPositions(img_clean, marker_stats_clean);
+img_material = rotateImageBasedOnMarkerPositions(img_material, marker_stats_material);
 
 % update marker positions and stats for rotated image
-marker_stats_clean = getMarkerStatsLAB(img_clean_rotated, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
-marker_stats_material = getMarkerStatsLAB(img_material_rotated, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+marker_stats_material = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
 
 % crop images
-img_clean_cropped = cropImageBasedOnMarkerPositions(img_clean_rotated, marker_stats_clean, MARKER_MARGIN_CROP);
-img_material_cropped = cropImageBasedOnMarkerPositions(img_material_rotated, marker_stats_material, MARKER_MARGIN_CROP);
+img_clean = cropImageBasedOnMarkerPositions(img_clean, marker_stats_clean, MARKER_MARGIN_CROP);
+img_material = cropImageBasedOnMarkerPositions(img_material, marker_stats_material, MARKER_MARGIN_CROP);
 % figure
 % imshowpair(img_clean_cropped, img_material_cropped, 'montage')
 
 % update marker positions and stats for rotated and cropped image
-marker_stats_clean = getMarkerStatsLAB(img_clean_cropped, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
-marker_stats_material = getMarkerStatsLAB(img_material_cropped, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+marker_stats_material = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
 
-% show found markers
-img_clean_with_marker = drawMarkerPositionsOnImg(img_clean_cropped, marker_stats_clean);
-img_material_with_marker = drawMarkerPositionsOnImg(img_material_cropped, marker_stats_material);
-figure
-imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
+% % show found markers
+% img_clean_with_marker = drawMarkerPositionsOnImg(img_clean, marker_stats_clean);
+% img_material_with_marker = drawMarkerPositionsOnImg(img_material, marker_stats_material);
+% % figure
+% % imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
 
 % calculate the global calibration factor based on the known radius of the
 % marker
@@ -82,27 +84,65 @@ global_calibfactor = getGlobalCalibfactor(marker_stats_clean, MARKER_RADIUS_MM);
 fprintf(' done!\n')
 
 %% IMAGE REGISTRATION
-fprintf('Image registration ... ')
+fprintf('Image registration based on markers ... ')
+
+% STEP 1: Registration based on markers
 % Match clean and material image ontop of each other
 % get moving and control points
-control_points = getSortedMarkerPoints(marker_stats_clean);
-moving_points = getSortedMarkerPoints(marker_stats_material);
+control_points_markers = getSortedMarkerPoints(marker_stats_clean);
+moving_points_markers = getSortedMarkerPoints(marker_stats_material);
 
 % find transformation between points
-tform = fitgeotrans(moving_points, control_points, 'affine');
+tform_1 = fitgeotrans(moving_points_markers, control_points_markers, 'NonreflectiveSimilarity');
 
 % transform image
-img_material_cropped_warped = imwarp(img_material_cropped,tform,'OutputView',imref2d(size(img_clean_cropped)));
+img_material = imwarp(img_material,tform_1,'OutputView',imref2d(size(img_clean)));
+
+% STEP 2: User selection
+% add preselected points for user
+
+% update marker positions
+marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+marker_stats_material = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+
+img_material_grid = drawGrid(img_material);
+img_clean_grid = drawGrid(img_clean);
+
+% get control points
+[control_points_preselected] = getPreselectedControlPoints(marker_stats_clean,img_clean);
+
+
+% add manually points
+[moving_points, control_points] = cpselect(img_material_grid, img_clean_grid, control_points_preselected,control_points_preselected,'Wait',true);
+
+
+
 fprintf(' done!\n')
 
+
+
+% find transformation between points
+n_control_points = length(control_points);
+
+if n_control_points >= 6
+    tform_2 = fitgeotrans(moving_points, control_points, 'polynomial', 2);
+elseif n_control_points >= 6
+    tform_2 = fitgeotrans(moving_points, control_points, 'projective');
+else
+    tform_2 = fitgeotrans(moving_points, control_points, 'affine');
+end
+% transform image
+img_material = imwarp(img_material,tform_2,'OutputView',imref2d(size(img_clean)));
+
 figure
-imshowpair(img_clean_cropped, img_material_cropped_warped, 'montage')
+imshowpair(img_clean, img_material, 'falsecolor')
+
 
 %% SEGMENTATION
 fprintf('Segmentation of both images ... ')
 % Segmentation
-bw_clean = imbinarize(rgb2gray(img_clean_cropped));
-bw_material = imbinarize(rgb2gray(img_material_cropped_warped));
+bw_clean = imbinarize(rgb2gray(img_clean));
+bw_material = imbinarize(rgb2gray(img_material));
 
 % figure
 % imshowpair(bw_clean, bw_material, 'montage');
@@ -153,10 +193,10 @@ imwrite(overlay_image, fullfile(path_results_subfolder, filename_overlay_img));
 
 %  cropped and rotate clean image
 filename_img_clean = ['img_clean_', filename_material_img_withoutending, '.png'];
-imwrite(img_clean_cropped, fullfile(path_results_subfolder, filename_img_clean));
+imwrite(img_clean, fullfile(path_results_subfolder, filename_img_clean));
 
 filename_img_clampinggrain = ['img_clampinggrain_', filename_material_img_withoutending, '.png'];
-imwrite(img_material_cropped_warped, fullfile(path_results_subfolder, filename_img_clampinggrain));
+imwrite(img_material, fullfile(path_results_subfolder, filename_img_clampinggrain));
 
 % binary images
 filename_bw_clean = ['bw_clean_', filename_material_img_withoutending, '.png'];
