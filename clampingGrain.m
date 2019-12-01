@@ -17,8 +17,8 @@ MARKER_RADIUS_MM = 18; % mm
 N_MARKER = 3;
 
 % Marker detection
-N_TIMES_MAX_LAB_DISTANCE = 3;
-MARKER_MARGIN_CROP = 20; %px
+LAB_DISTANCE = 22;
+MARKER_MARGIN_CROP = 20; % px
 
 %% LOADING OF IMAGES
 fprintf('Loading images ... ')
@@ -41,7 +41,7 @@ fprintf(' done!\n')
 fprintf('Detecting markers ... ')
 % load marker colors and get mean marker color and threshold
 img_marker = imread('marker/marker_color.jpg');
-[threshold_lab_distance, marker_mean_colorvalue_lab] = getMarkerThresholdsLAB(img_marker, N_TIMES_MAX_LAB_DISTANCE);
+[threshold_lab_distance, marker_mean_colorvalue_lab] = getMarkerThresholdsLAB(img_marker, LAB_DISTANCE);
 
 % get marker positions and stats
 marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
@@ -73,8 +73,8 @@ marker_stats_material = getMarkerStatsLAB(img_material_cropped, marker_mean_colo
 % show found markers
 img_clean_with_marker = drawMarkerPositionsOnImg(img_clean_cropped, marker_stats_clean);
 img_material_with_marker = drawMarkerPositionsOnImg(img_material_cropped, marker_stats_material);
-% figure
-% imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
+figure
+imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
 
 % calculate the global calibration factor based on the known radius of the
 % marker
@@ -89,11 +89,14 @@ control_points = getSortedMarkerPoints(marker_stats_clean);
 moving_points = getSortedMarkerPoints(marker_stats_material);
 
 % find transformation between points
-tform = fitgeotrans(moving_points, control_points, 'nonreflectivesimilarity');
+tform = fitgeotrans(moving_points, control_points, 'affine');
 
 % transform image
 img_material_cropped_warped = imwarp(img_material_cropped,tform,'OutputView',imref2d(size(img_clean_cropped)));
 fprintf(' done!\n')
+
+figure
+imshowpair(img_clean_cropped, img_material_cropped_warped, 'montage')
 
 %% SEGMENTATION
 fprintf('Segmentation of both images ... ')
