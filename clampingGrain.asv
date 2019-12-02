@@ -23,21 +23,16 @@ MARKER_MARGIN_CROP = 20; % px
 % get clean image from UI
 [img_clean, updated_starting_folder] = readImgFromUI('Select image of clean sieving surface.', STARTING_FOLDER);
 
-multiple_files = false;
-
 if multiple_files == true
-    % MULTIPLE IMAGES
     % get material folder
     folder_material_img = uigetdir(updated_starting_folder, 'Select folder with images.');
     % get list of all images to process
     list_material_img = dir(fullfile(folder_material_img, '*.JPG'));
+    n_images = length(list_material_img);
 else
-    % ONE IMAGE
-    [file, path] = uigetfile(fullfile(updated_starting_folder, '*.jpg'), 'Select image.');
-    list_material_img = dir(fullfile(path, file));  
+    
+    
 end
-
-n_images = length(list_material_img);
 
 for i = 1:n_images
     tic
