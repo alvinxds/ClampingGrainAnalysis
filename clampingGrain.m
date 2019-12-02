@@ -17,7 +17,7 @@ MARKER_RADIUS_MM = 18; % mm
 N_MARKER = 3;
 
 % Marker detection
-LAB_DISTANCE = 25;
+threshold_lab_distance = 30;
 MARKER_MARGIN_CROP = 20; % px
 
 %% LOADING OF IMAGES
@@ -41,7 +41,7 @@ fprintf(' done!\n')
 fprintf('Detecting markers ... ')
 % load marker colors and get mean marker color and threshold
 img_marker = imread('marker/marker_color.jpg');
-[threshold_lab_distance, marker_mean_colorvalue_lab] = getMarkerThresholdsLAB(img_marker, LAB_DISTANCE);
+[~, marker_mean_colorvalue_lab] = getMarkerThresholdsLAB(img_marker, threshold_lab_distance);
 
 % get marker positions and stats
 marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
