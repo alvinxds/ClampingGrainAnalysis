@@ -9,7 +9,7 @@ addpath(genpath('.\functions'));
 
 
 % Settings
-STARTING_FOLDER = 'C:\Users\Nils Kröll\sciebo\IAR\Klemmkorn Paper\020 Messreihen\001 SSF fein\Bilder Siebboden';
+STARTING_FOLDER = 'C:\Users\nkroell\sciebo\IAR\Klemmkorn Paper\030 Aufnahmen vorbereitet für Auswertungsprogramm';
 COVERAGE_CLASS_EDGES = [0,eps,0.1,0.9,1];
 
 % Settings Marker
@@ -44,8 +44,11 @@ img_marker = imread('marker/marker_color.jpg');
 [~, marker_mean_colorvalue_lab] = getMarkerThresholdsLAB(img_marker, threshold_lab_distance);
 
 % get marker positions and stats
-marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
-marker_stats_material = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+[marker_stats_clean, bw_marker_clean] = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+[marker_stats_material, bw_marker_material] = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+
+% figure
+% imshowpair(bw_marker_clean, bw_marker_material, 'montage');
 
 fprintf(' done!\n')
 
@@ -72,11 +75,11 @@ img_material = cropImageBasedOnMarkerPositions(img_material, marker_stats_materi
 marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
 marker_stats_material = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
 
-% % show found markers
+% show found markers
 % img_clean_with_marker = drawMarkerPositionsOnImg(img_clean, marker_stats_clean);
 % img_material_with_marker = drawMarkerPositionsOnImg(img_material, marker_stats_material);
-% % figure
-% % imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
+% figure
+% imshowpair(img_clean_with_marker, img_material_with_marker, 'montage')
 
 % calculate the global calibration factor based on the known radius of the
 % marker
@@ -99,43 +102,52 @@ tform_1 = fitgeotrans(moving_points_markers, control_points_markers, 'Nonreflect
 img_material = imwarp(img_material,tform_1,'OutputView',imref2d(size(img_clean)));
 
 % STEP 2: User selection
-% add preselected points for user
+% % add preselected points for user
+% 
+% % get centroids of sieving holes
+% centroids_clean = getCentroidsOfSievingHoles(img_clean);
+% centroids_material = getCentroidsOfSievingHoles(img_material);
+% 
+% % update marker positions
+% marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+% marker_stats_material = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
+% 
+% % draw grid on image for better navigation of user
+% img_material_grid = drawGrid(img_material);
+% img_clean_grid = drawGrid(img_clean);
+% 
+% 
+% 
+% % get control points
+% [control_points_preselected] = getPreselectedControlPoints(marker_stats_clean,centroids_clean, 3);
+% [moving_points_preselected] = movePointsToNearestNeighbor(control_points_preselected, centroids_material);
+% 
+% % add markers
+% control_points_preselected = [getSortedMarkerPoints(marker_stats_clean); control_points_preselected];
+% moving_points_preselected = [getSortedMarkerPoints(marker_stats_material); moving_points_preselected];
+% 
+% % add manually points
+% [moving_points, control_points] = cpselect(img_material_grid, img_clean_grid, control_points_preselected,control_points_preselected,'Wait',true);
+% 
+% fprintf(' done!\n')
+% 
+% 
+% 
+% % find transformation between points
+% n_control_points = length(control_points);
+% 
+% if n_control_points >= 6
+%     tform_2 = fitgeotrans(moving_points, control_points, 'polynomial', 2);
+% elseif n_control_points >= 4
+%     tform_2 = fitgeotrans(moving_points, control_points, 'projective');
+% else
+%     tform_2 = fitgeotrans(moving_points, control_points, 'affine');
+% end
+% % transform image
+% img_material = imwarp(img_material,tform_2,'OutputView',imref2d(size(img_clean)));
 
-% update marker positions
-marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
-marker_stats_material = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
-
-img_material_grid = drawGrid(img_material);
-img_clean_grid = drawGrid(img_clean);
-
-% get control points
-[control_points_preselected] = getPreselectedControlPoints(marker_stats_clean,img_clean);
-
-
-% add manually points
-[moving_points, control_points] = cpselect(img_material_grid, img_clean_grid, control_points_preselected,control_points_preselected,'Wait',true);
-
-
-
-fprintf(' done!\n')
-
-
-
-% find transformation between points
-n_control_points = length(control_points);
-
-if n_control_points >= 6
-    tform_2 = fitgeotrans(moving_points, control_points, 'polynomial', 2);
-elseif n_control_points >= 6
-    tform_2 = fitgeotrans(moving_points, control_points, 'projective');
-else
-    tform_2 = fitgeotrans(moving_points, control_points, 'affine');
-end
-% transform image
-img_material = imwarp(img_material,tform_2,'OutputView',imref2d(size(img_clean)));
-
-figure
-imshowpair(img_clean, img_material, 'falsecolor')
+% figure
+% imshowpair(img_clean, img_material, 'falsecolor')
 
 
 %% SEGMENTATION
