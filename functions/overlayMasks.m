@@ -50,6 +50,6 @@ function [overlay_image] = overlayMasks(bw_clean,bw_material)
     
     overlay_image = zeros(size(bw_clean));
     overlay_image(bw_clean==1) = 127;
-    overlay_image(bw_clamping_grain_preprocessed==1) = 255;
+    overlay_image(bw_clamping_grain_preprocessed==1) = 255;  
     overlay_image = uint8(overlay_image);   
 end
