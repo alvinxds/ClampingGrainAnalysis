@@ -8,7 +8,7 @@ clc
 addpath(genpath('.\functions'));
 
 %% SETTINGS
-STARTING_FOLDER = 'C:\Users\nkroell\sciebo\IAR\Klemmkorn Paper\030 Aufnahmen vorbereitet für Auswertungsprogramm';
+STARTING_FOLDER = 'C:\Users\Nils Kröll\sciebo\IAR\Klemmkorn Paper\000 Veröffentlichung\030 Abbildungen\Abbildung Algorithmus';
 COVERAGE_CLASS_EDGES = [0,eps,0.1,0.9,1];
 
 % Marker
@@ -17,23 +17,28 @@ N_MARKER = 3;
 
 % Marker detection
 threshold_lab_distance = 30;
-MARKER_MARGIN_CROP = 20; % px
+MARKER_MARGIN_CROP = 100; % px
+
+% go trough all images in folder instead of single file:
+MULTIPLE_FILES = false;
+LEAVE_CROPPING_OUT = false;
+FILE_ENDING = '*.JPG'; % adjust here for .png or .jpg
+
 
 %% Load paths
 % get clean image from UI
 [img_clean, updated_starting_folder] = readImgFromUI('Select image of clean sieving surface.', STARTING_FOLDER);
 
-multiple_files = false;
 
-if multiple_files == true
+if MULTIPLE_FILES == true
     % MULTIPLE IMAGES
     % get material folder
     folder_material_img = uigetdir(updated_starting_folder, 'Select folder with images.');
     % get list of all images to process
-    list_material_img = dir(fullfile(folder_material_img, '*.JPG'));
+    list_material_img = dir(fullfile(folder_material_img, FILE_ENDING)); 
 else
     % ONE IMAGE
-    [file, path] = uigetfile(fullfile(updated_starting_folder, '*.jpg'), 'Select image.');
+    [file, path] = uigetfile(fullfile(updated_starting_folder, '*.*'), 'Select image.');
     list_material_img = dir(fullfile(path, file));  
 end
 
@@ -42,6 +47,7 @@ n_images = length(list_material_img);
 for i = 1:n_images
     tic
     fprintf('Image %i of %i: %s\n\n',i, n_images,  list_material_img(i).name)
+    
     %% PREPARE CURRENT IMAGE
     
     % get infos for current image
@@ -65,7 +71,15 @@ for i = 1:n_images
     % get marker positions and stats
     [marker_stats_clean, bw_marker_clean] = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
     [marker_stats_material, bw_marker_material] = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
-
+    
+    % show marker stats
+    [img_clean_with_marker] = drawMarkerPositionsOnImg(img_clean,marker_stats_clean);
+    [img_material_with_marker] = drawMarkerPositionsOnImg(img_material,marker_stats_material);
+    figure
+    imshowpair(img_clean_with_marker, img_material_with_marker, 'montage');
+    imwrite(img_clean_with_marker, fullfile(path, 'clean_with_marker.png'))
+    imwrite(img_material_with_marker, fullfile(path, 'material_with_marker.png'))
+    break
     % make backup for images for saving them later
     img_clean_org = img_clean;
     img_material_org = img_material;
@@ -99,61 +113,22 @@ for i = 1:n_images
     moving_points_markers = getSortedMarkerPoints(marker_stats_material);
 
     % find transformation between points
-    tform_1 = fitgeotrans(moving_points_markers, control_points_markers, 'NonreflectiveSimilarity');
+    tform = fitgeotrans(moving_points_markers, control_points_markers, 'NonreflectiveSimilarity');
 
     % transform image
-    img_material = imwarp(img_material,tform_1,'OutputView',imref2d(size(img_clean)));
+    img_material = imwarp(img_material,tform,'OutputView',imref2d(size(img_clean)));
+    
 
-    % STEP 2: User selection
-    % % add preselected points for user
-    % 
-    % % get centroids of sieving holes
-    % centroids_clean = getCentroidsOfSievingHoles(img_clean);
-    % centroids_material = getCentroidsOfSievingHoles(img_material);
-    % 
-    % % update marker positions
-    % marker_stats_clean = getMarkerStatsLAB(img_clean, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
-    % marker_stats_material = getMarkerStatsLAB(img_material, marker_mean_colorvalue_lab, threshold_lab_distance, N_MARKER);
-    % 
-    % % draw grid on image for better navigation of user
-    % img_material_grid = drawGrid(img_material);
-    % img_clean_grid = drawGrid(img_clean);
-    % 
-    % 
-    % 
-    % % get control points
-    % [control_points_preselected] = getPreselectedControlPoints(marker_stats_clean,centroids_clean, 3);
-    % [moving_points_preselected] = movePointsToNearestNeighbor(control_points_preselected, centroids_material);
-    % 
-    % % add markers
-    % control_points_preselected = [getSortedMarkerPoints(marker_stats_clean); control_points_preselected];
-    % moving_points_preselected = [getSortedMarkerPoints(marker_stats_material); moving_points_preselected];
-    % 
-    % % add manually points
-    % [moving_points, control_points] = cpselect(img_material_grid, img_clean_grid, control_points_preselected,control_points_preselected,'Wait',true);
-    % 
-    % fprintf(' done!\n')
-    % 
-    % 
-    % 
-    % % find transformation between points
-    % n_control_points = length(control_points);
-    % 
-    % if n_control_points >= 6
-    %     tform_2 = fitgeotrans(moving_points, control_points, 'polynomial', 2);
-    % elseif n_control_points >= 4
-    %     tform_2 = fitgeotrans(moving_points, control_points, 'projective');
-    % else
-    %     tform_2 = fitgeotrans(moving_points, control_points, 'affine');
-    % end
-    % % transform image
-    % img_material = imwarp(img_material,tform_2,'OutputView',imref2d(size(img_clean)));
-
-    % figure
-    % imshowpair(img_clean, img_material, 'falsecolor')
 
 
     %% SEGMENTATION
+    
+    if LEAVE_CROPPING_OUT == true
+        img_clean = img_clean_org;
+        img_material = img_material_org;
+    end
+    
+    
     bw_clean = imbinarize(rgb2gray(img_clean));
     bw_material = imbinarize(rgb2gray(img_material));
     
@@ -211,3 +186,5 @@ for i = 1:n_images
     toc
     fprintf('\n\n')
 end
+
+fprintf('DONE.\n')
